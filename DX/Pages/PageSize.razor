@@ -1,0 +1,93 @@
+﻿@page "/pagesize"
+<RadzenLabel @ref="@radzenTitle" Style="@radzenTitle.Style" Text="Title" />
+
+
+<RadzenLabel @ref="@radzenLabel" Style="@radzenLabel.Style" Text="Halo Dunia" />
+
+@*<RadzenButton Click="@NaikkanFont"  Text ="Increase"/>
+*@
+<DxSpinEdit ValueChanged="((int e) => NaikkanFont(e))" BindValueMode="BindValueMode.OnInput" @ref="@speGrade"></DxSpinEdit>
+
+
+
+<DxFormLayout @ref="@dxFormLayout">
+    <DxFormLayoutGroup @ref="@lyGroup" ColSpanMd="18">
+        <HeaderTemplate>
+            <div class="row">
+                <div class="col-md-8">
+                    Test XYZ ABC DEFG
+                </div>
+                <div class="col-md-4 custom-button">
+                    <button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Data Baru" aria-label="Left Align">
+                        <span class="fa fa-solid fa-plus" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Hapus" aria-label="Left Align">
+                        <span class="fa fa-solid fa-trash" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Simpan" aria-label="Left Align">
+                        <span class="fa fa-solid fa-check" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Cetak" aria-label="Left Align">
+                        <span class="fa fa-solid fa-print" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Batal" aria-label="Left Align">
+                        <span class="fa fa-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+        </HeaderTemplate>
+        <Items>
+            <DxFormLayoutItem @ref="@lyItem" Caption="Position:" ColSpanMd="18">
+                <DxTextBox @bind-Text="@Position"/>
+            </DxFormLayoutItem>
+            <DxFormLayoutItem Caption="Hire Date:" ColSpanMd="18">
+                <DxDateEdit @bind-Date="@HireDate"  />
+            </DxFormLayoutItem>
+            <DxFormLayoutItem Caption="Notes:" ColSpanMd="18">
+                <DxTextBox @bind-Text="@Notes" />
+            </DxFormLayoutItem>
+        </Items>
+    </DxFormLayoutGroup>
+</DxFormLayout>
+
+<style>
+    .form_layout {
+        font-size: @speEdit
+    }
+
+</style>
+
+@code {
+    public RenderFragment<DxFormLayout> renderTextBox = (DxFormLayout model) =>
+    @<DxFormLayout  style="@model"></DxFormLayout>;
+
+    RadzenLabel radzenLabel { get; set; } = new();
+    RadzenLabel radzenTitle { get; set; } = new();
+    DxSpinEdit<int> speGrade { get; set; }
+    DxFormLayout dxFormLayout { get; set; } = new();
+    DxFormLayoutItem lyItem { get; set; } = new();
+
+    DxFormLayoutGroup lyGroup { get; set; } = new();
+
+
+    int fontsize = 12;
+    public string speEdit = string.Empty;
+
+    string FirstName { get; set; } = "Nancy";
+    string LastName { get; set; } = "Davolio";
+    DateTime BirthDate { get; set; } = DateTime.Now.AddYears(-80);
+    string Position { get; set; } = "Sales Representative";
+    DateTime? HireDate { get; set; } = DateTime.Now.AddYears(-80);
+    string Notes { get; set; } = "Education includes a BA in psychology.";
+
+    void NaikkanFont(int size)
+    {
+        speEdit = $"{fontsize + size}px;";
+        radzenLabel.Style = "form_layout";
+        radzenTitle.Style = "form_layout";
+        lyGroup.CaptionCssClass = "form_layout";
+        lyGroup.HeaderCssClass = "form_layout";
+
+    }
+}
+

@@ -1,0 +1,222 @@
+﻿@page "/profile"
+@using DevExpress.Blazor.Internal
+@using System.Text.RegularExpressions;
+
+
+<style>
+    .card-header-picture {
+        background-color: transparent;
+        border-bottom: none;
+    }
+
+    .card
+    {
+        border:none !important;
+    }
+
+    .validasierror
+    {
+        border-color:red;
+    }
+
+    .validasucess
+    {
+        border-color:green;
+    }
+</style>
+
+<RadzenSplitter Orientation="Radzen.Orientation.Horizontal" Collapse=@OnCollapse Expand=@OnExpand style="height: max-content; border: 0px solid rgba(0,0,0,.08);">
+    <RadzenSplitterPane Size="30%" Min="10px">
+        <DxFormLayout>
+            <DxFormLayoutGroup Caption="Personal Information" ColSpanMd="12">
+                <DxFormLayoutItem Caption="First Name:" ColSpanMd="12">
+                    <DxTextBox Text="FirstName" />
+                </DxFormLayoutItem>
+                <DxFormLayoutItem Caption="Last Name:" ColSpanMd="12">
+                    <DxTextBox Text="LastName" />
+                </DxFormLayoutItem>
+                <DxFormLayoutItem Caption="Birth Date:" ColSpanMd="12">
+                    <DxDateEdit Date="@DateTime.Now" />
+                </DxFormLayoutItem>
+            </DxFormLayoutGroup>
+        </DxFormLayout>
+    </RadzenSplitterPane>
+    <RadzenSplitterPane Style="height:80vh">
+        <DxFormLayout>
+
+            <DxFormLayoutGroup Caption="Personal Information" ColSpanMd="12">
+                <DxFormLayoutGroup HeaderCssClass="card-header-picture" ColSpanMd="4">
+                    <DxFormLayoutItem ColSpanMd="12">
+                        <center>
+                            <RadzenImage Style="height:140px;" Path="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png" />
+                        </center>
+                    </DxFormLayoutItem>
+                </DxFormLayoutGroup>
+                <DxFormLayoutGroup HeaderCssClass="card-header-picture" ColSpanMd="8">
+                    <DxFormLayoutItem @ref="@lyUserName" Caption="User Name" ColSpanMd="12">
+                        <DxTextBox  @ref=@txbUserName Text="@txbUserName.Text" />
+                    </DxFormLayoutItem>
+                    <DxFormLayoutItem @ref="@lyUserPassword" Caption="User Password:" ColSpanMd="12">
+                        <DxTextBox  @ref=@txbUserPassword Text="@txbUserPassword.Text" />
+                    </DxFormLayoutItem>
+                    <DxFormLayoutItem @ref="@lyKonfirmasiPassword" Caption="Konfirmasi Password:" ColSpanMd="12">
+                        <DxTextBox  @ref=@txbKonfirmasiPassword Text="@txbKonfirmasiPassword.Text" />
+                    </DxFormLayoutItem>
+                    <DxFormLayoutItem @ref="@lyLevelPassword" Caption="Password Level:" ColSpanMd="12">
+                        <DxTextBox  @ref=@txbLevelPassword Text="@txbLevelPassword.Text" />
+                    </DxFormLayoutItem>
+
+                    <DxFormLayoutGroup HeaderCssClass="card-header-picture" ColSpanMd="12">
+                        <center>
+                            <DxFormLayoutItem ColSpanMd="6">
+                                <DxButton @ref="@btnSimpan" Text="@btnSimpan.Text" />
+                            </DxFormLayoutItem>
+                        </center>
+
+                        <center>
+                            <DxFormLayoutItem ColSpanMd="6">
+                                <DxButton @ref="@btnBatal" Visible="@btnBatal.Visible" Text="Batal" />
+                            </DxFormLayoutItem>
+                        </center>
+                    </DxFormLayoutGroup>
+
+                </DxFormLayoutGroup>
+                
+
+            </DxFormLayoutGroup>
+
+        </DxFormLayout>
+
+    </RadzenSplitterPane>
+</RadzenSplitter>
+
+
+@code{
+    DxButton btnSimpan { get; set; } = new();
+    DxButton btnBatal { get; set; } = new();
+
+
+    DxFormLayoutItem lyUserName { get; set; } = new();
+    DxFormLayoutItem lyUserPassword { get; set; } = new();
+    DxFormLayoutItem lyLevelPassword { get; set; } = new();
+    DxFormLayoutItem lyKonfirmasiPassword { get; set; } = new();
+
+
+    DxTextBox txbUserName { get; set; } = new();
+    DxTextBox txbUserPassword { get; set; } = new();
+    DxTextBox txbLevelPassword { get; set; } = new();
+    DxTextBox txbKonfirmasiPassword { get; set; } = new();
+
+    void OnCollapse(RadzenSplitterEventArgs args)
+    {
+    }
+    void OnExpand(RadzenSplitterEventArgs args)
+    {
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        lyUserPassword.Visible = false;
+        lyLevelPassword.Visible = false;
+        lyKonfirmasiPassword.Visible = false;
+
+        txbUserPassword.TextChanged = new EventCallback<string>(this, (string text) => TextPasswordBerubah(text));
+        txbUserPassword.BindValueMode = BindValueMode.OnLostFocus;
+
+        txbKonfirmasiPassword.TextChanged = new EventCallback<string>(this, (string text) => TextKonfirmasiPasswordBerubah(text));
+        txbKonfirmasiPassword.BindValueMode = BindValueMode.OnLostFocus;
+        btnBatal.Visible = false;
+
+        btnSimpan.Text = "Ganti Password";
+        btnSimpan.Click = new EventCallback<MouseEventArgs>(this, (MouseEventArgs e) => GantiPassword(e));
+
+        btnBatal.Click = new EventCallback<MouseEventArgs>(this, (MouseEventArgs e) => Cancel(e));
+    }
+
+
+    void TextPasswordBerubah(string text)
+   {
+        string patternText = @"[!|@|#|$|%|^|&|*|(|)|-|_|=|+|'|:|?|/|.|>|,|<][A-Z]|[A-Z][!|@|#|$|%|^|&|*|(|)|-|_|=|+|'|:|?|/|.|>|,|<]";
+
+        Regex reg = new Regex(patternText);
+        ShowControl();
+        if (text.Length >= 8 && !reg.IsMatch(text))
+        {
+            txbLevelPassword.Text = "Sedang";
+        }
+
+        if (reg.IsMatch(text)  && text.Length>=8)
+        {
+            txbLevelPassword.Text = "Kuat";
+        }
+
+        if (text=="")
+        {
+            txbLevelPassword.Text = "Isi kan Password";
+        }
+
+        KonfirmasiPassword(text);
+    }
+
+
+    void TextKonfirmasiPasswordBerubah(string text)
+    {
+        ShowControl();
+        KonfirmasiPassword(text);
+    }
+
+    void KonfirmasiPassword(string text)
+    {
+
+        if (text != txbUserPassword.Text || txbKonfirmasiPassword.Text != text)
+        {
+            txbKonfirmasiPassword.InputCssClass = "validasierror";
+            txbUserPassword.InputCssClass = "validasierror";
+        }
+
+        if (text == txbUserPassword.Text)
+        {
+            txbKonfirmasiPassword.InputCssClass = "validasucess";
+            txbUserPassword.InputCssClass = "validasucess";
+            //txbKonfirmasiPassword.FocusAsync();
+            StateHasChanged();
+        }
+    }
+
+    void GantiPassword(MouseEventArgs e)
+    {
+        if (btnSimpan.Text == "Ganti Password")
+        {
+            ShowControl();
+        }
+    }
+
+
+    void Cancel(MouseEventArgs e)
+    {
+        HideControl();
+    }
+
+    void ShowControl()
+    {
+        btnBatal.Visible = true;
+        btnSimpan.Text = "Simpan";
+        lyUserPassword.Visible = true;
+        lyLevelPassword.Visible = true;
+        lyKonfirmasiPassword.Visible = true;
+    }
+
+    void HideControl()
+    {
+        btnBatal.Visible = false;
+        btnSimpan.Text = "Ganti Password";
+        lyUserPassword.Visible = false;
+        lyLevelPassword.Visible = false;
+        lyKonfirmasiPassword.Visible = false;
+    }
+}

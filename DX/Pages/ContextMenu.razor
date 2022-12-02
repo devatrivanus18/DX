@@ -1,0 +1,37 @@
+﻿@page "/"
+@using System.Drawing;
+
+@inject IJSRuntime js;
+<h3>ContextMenu</h3>
+<div @oncontextmenu="((e) => contextMenu.ShowAsync(e))" @oncontextmenu:preventDefault>
+    <p>Test</p>
+    <DxContextMenu @ref="@contextMenu">
+        <Items>
+            <DxContextMenuItem Text="Sort By" IconUrl="images/Sort_by.svg">
+                <Items>
+                    <DxContextMenuItem Text="Name"></DxContextMenuItem>
+                    <DxContextMenuItem Text="Size"></DxContextMenuItem>
+                    <DxContextMenuItem Text="Type"></DxContextMenuItem>
+                </Items>
+            </DxContextMenuItem>
+            <DxContextMenuItem Text="Copy" IconUrl="images/Copy.svg" BeginGroup="true"></DxContextMenuItem>
+            <DxContextMenuItem Text="Cut" IconUrl="images/Cut.svg"></DxContextMenuItem>
+            <DxContextMenuItem Text="Remove" IconUrl="images/Clear.svg"></DxContextMenuItem>
+            <DxContextMenuItem Text="Select All" BeginGroup="true"></DxContextMenuItem>
+        </Items>
+    </DxContextMenu>
+    <DxButton Click="@putToCanvas" Text="SS" ></DxButton>
+    <img src="@url" alt="Girl in a jacket">
+</div>
+
+@code {
+    public string url;
+    DxContextMenu contextMenu{ get; set; } = new();
+    private async Task putToCanvas()
+    {
+        var x = await js.InvokeAsync<string>("getData");
+        url =x;
+        StateHasChanged();
+
+    }
+}

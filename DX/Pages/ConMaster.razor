@@ -1,0 +1,421 @@
+﻿@page "/conmaster"
+@using DX.Data;
+@using DX.Shared;
+@using System.Drawing.Printing;
+@using Newtonsoft.Json.Linq
+@inject WeatherForecastService svc
+@inject IJSRuntime JSRuntime
+
+<link rel="stylesheet" href="@urlTema" />
+
+
+
+<RadzenProgressBar class="hide-to-mobile" Value="1500" ShowValue="false" ProgressBarStyle="ProgressBarStyle.Light" Mode="ProgressBarMode.Indeterminate" Visible="@IsLoading" />
+<RadzenSplitter Orientation="Radzen.Orientation.Horizontal" Collapse=@OnCollapse Expand=@OnExpand style="height: max-content; border: 0px solid rgba(0,0,0,.08);">
+    <RadzenSplitterPane Size="@SizeTabel">
+        <div class="hide-to-mobile" hidden="@hideRekapitulasi">
+            <DxCalendar T="DateTime" VisibleDate="@DateTime.Today" />
+            <DxListBox @bind-Value="@Value" Data="@Filters">
+
+            </DxListBox>
+        </div>
+        <div hidden="@hideKonfigurasi" class="konfigurasi hide-to-mobile">
+                <div>
+                <DxFormLayout>
+                    <DxFormLayoutGroup Caption="Pengaturan Form" ColSpanMd="12">
+                        <DxFormLayoutItem Caption="Tema" ColSpanMd="4">
+
+                        </DxFormLayoutItem>
+                        <DxFormLayoutItem ColSpanMd="8">
+                            <DxComboBox 
+                                        Data="@ListTema"
+                                        NullText="Pilih tema"
+                                        ValueChanged="@((ModelTema modelTheme) => ProsesPilihTema(modelTheme))"
+                                        TextFieldName="Tema"
+                                        ValueFieldName="@nameof(ModelTema)"
+                                        Value="@_modelTema">
+                            </DxComboBox>
+                            <p></p>
+                        </DxFormLayoutItem>
+                        <DxFormLayoutItem Caption="Font Size:" ColSpanMd="4">
+                           
+                        </DxFormLayoutItem >
+                        <DxFormLayoutItem ColSpanMd="8">
+                         <DxSpinEdit Value="1" />
+                        </DxFormLayoutItem>
+                    </DxFormLayoutGroup>
+                </DxFormLayout>
+                </div>
+                <br/><br/><br/>
+                <div>
+                    <span style="font-size:small; color:gray">Pengaturan Cetak</span>
+                <DxGrid Data="@ListDokumen"
+                        PageSize="30">
+                        <Columns>
+                            <DxGridDataColumn FieldName="Dokumen" Caption="Dokumen">
+
+                            </DxGridDataColumn>
+
+                            <DxGridDataColumn  Caption="P">
+                                <CellDisplayTemplate>
+                                    <DxCheckBox Checked="false"></DxCheckBox>
+                                </CellDisplayTemplate>
+                            </DxGridDataColumn>
+
+                        <DxGridDataColumn Caption="Output">
+                            <CellDisplayTemplate>
+                                <DxComboBox Text="Tema" Data="@ListPrinter"
+                                            TextFieldName="NamaPrinter"
+                                            ValueFieldName="NamaPrinter"
+                                            Value="@nameof(ModelPrinter.NamaPrinter)">
+                                    <DxListEditorColumn FieldName="NamaPrinter"
+                                                        Caption="@nameof(ModelPrinter.NamaPrinter)" />
+                                </DxComboBox>
+                            </CellDisplayTemplate>
+                        </DxGridDataColumn>
+
+
+                            <DxGridDataColumn  Caption="J">
+                                <CellDisplayTemplate>
+                                    <DxSpinEdit MinValue="0" MaxValue="10"></DxSpinEdit>
+                                </CellDisplayTemplate>
+                             </DxGridDataColumn>
+                        </Columns>
+                    </DxGrid>
+                </div>
+        </div>
+        <div style="align-items:end !important" class="tetap-bottom hide-to-mobile">
+            <button type="button" class="btn btn-default @isRekapitulasiAktif" @onclick="TampilRekapitulasi" data-toggle="tooltip" data-placement="top" title="Rekapitulasi" aria-label="Left Align">
+                <span class="fa fa-regular fa-file-lines" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="btn btn-default @isSettingAktif" @onclick="TampilKonfigurasi" data-toggle="tooltip" data-placement="top" title="Settings" aria-label="Left Align">
+                <span class="fa fa-solid fa-gear" aria-hidden="true"></span>
+            </button>
+        </div>
+ 
+    </RadzenSplitterPane>
+
+    <RadzenSplitterPane class="hide-to-mobile">
+        <DxGrid @ref="Grid" Data="@_dsRekapitulasi"
+                PageSize="1000"
+                CssClass="ch-360">
+            <Columns>
+                <DxGridDataColumn FieldName="TemperatureC" Caption="@("Temp. (\x2103)")" />
+                <DxGridDataColumn FieldName="TemperatureF" Caption="@("Temp. (\x2109)")" />
+                <DxGridDataColumn FieldName="Summary" Caption="Summary" />
+            </Columns>
+        </DxGrid>
+    </RadzenSplitterPane>
+</RadzenSplitter>
+
+<div class="tampilkan-footer">
+    <!--Tampilan untuk mobile-->
+        <nav class="navbar fixed-bottom navbar-light bg-light">
+            <form class="form-inline">
+                <center>
+                    <button itemid="popup-date" id="popup-date" @onclick="()=> IsOpenDate = !IsOpenDate" class="btn" type="button"><i class="fa-regular fa-calendar"></i></button>
+                    <button itemid="popup-filter" id="popup-filter" @onclick="()=> IsOpen = !IsOpen" class="btn" type="button"><i class="fa-solid fa-filter"></i></button>
+                    <button class="btn btn-lg column-chooser-button" type="button" @onclick="@TampilkanColumnChooser"><i class="fa-solid fa-table-columns"></i></button>
+                    <button class="btn btn-lg" type="button"><i class="fa-solid fa-print"></i></button>
+                </center>
+            </form>
+        </nav>
+</div>
+
+
+<DxFlyout @bind-IsOpen=IsOpen
+          PositionTarget="#popup-filter"
+          RestrictionTarget="#Navigation-Flyout-Overview"
+          FitToRestriction=true
+          CloseMode="FlyoutCloseMode.Close"
+          FooterVisible="true"
+          FooterCssClass="custom-flyout-footer"
+          Position="FlyoutPosition.Top"
+          Width="max(25vw, 250px)"
+          PreventCloseOnPositionTargetClick="true">
+
+    <BodyTemplate>
+        <DxListBox @bind-Value="@urlTema" Data="@Filters">
+
+       </DxListBox>
+    </BodyTemplate>
+    <FooterTemplate>
+
+    </FooterTemplate>
+</DxFlyout>
+
+
+<DxFlyout @bind-IsOpen=IsOpenDate
+          PositionTarget="#popup-date"
+          RestrictionTarget="#Navigation-Flyout-Overview"
+          FitToRestriction=true
+          CloseMode="FlyoutCloseMode.Close"
+          FooterVisible="true"
+          FooterCssClass="custom-flyout-footer"
+          Position="FlyoutPosition.Top"
+          Width="max(25vw, 250px)"
+          PreventCloseOnPositionTargetClick="true">
+
+    <BodyTemplate>
+        <DxCalendar T="DateTime" VisibleDate="@DateTime.Today" />
+    </BodyTemplate>
+    <FooterTemplate>
+
+    </FooterTemplate>
+</DxFlyout>
+
+
+
+<style>
+
+    .tetap-bottom {
+      position: fixed !important;
+      z-index: 1030 !important;
+      bottom:0;
+      width:100% !important;
+      background-color:lightgray !important;
+    }
+
+    .rz-splitter-pane
+    {
+        /*overflow:inherit;*/
+    }
+
+    .tampilkan-footer {
+        display: none !important;
+    }
+
+    .superhero-backgroud
+    {
+        background-color:yellow !important;
+    }
+
+    .pulse-backgroud {
+        background-color: coral !important;
+    }
+
+    .parent {
+        position: relative;
+    }
+
+    .bottom {
+        position: absolute; /* Set div position to relative */
+        width:100%;
+    }
+    .navigasi-rekapitulasi {
+        position: sticky; /* Set div position to relative */
+        width:100%;
+        align-items:end;
+    }
+
+    @@media only screen and (max-width: 768px) {
+        .dxbs-grid{
+           height: 100vh !important;
+        }
+
+        .konfigurasi{
+            height:100vh !important;
+        }
+
+        .sidebar
+        {
+            display: none;
+        }
+
+
+        .hide-to-mobile {
+            display: none;
+        }
+
+        .tampilkan-footer {
+            display: inherit !important;
+        }
+
+        .rz-splitter-horizontal > .rz-splitter-bar{
+            display: none;
+        }
+        
+    }
+
+    @@media only screen and (max-width: 992px) {
+        .dxbs-grid{
+           height: 100vh !important;
+        }
+
+        .konfigurasi{
+            height:100vh !important;
+        }
+
+        .rz-splitter-horizontal > .rz-splitter-bar{
+            display: none;
+        } 
+    }
+</style>
+@code {
+
+    bool IsOpen { get; set; } = false;
+    bool IsOpenDate { get; set; } = false;
+    string SizeTabel { get; set; } = "30%";
+
+    IEnumerable<string> Filters = new List<string>() {
+    "Semua Data Tanpa Filter",
+    "Transaksi Aktif",
+    "Transaksi Batal",
+    "Transaksi Dalam 1 Hari",
+  };
+
+
+    ModelTema _modelTema { get; set; } = new();
+    IEnumerable<string> Values { get; set; }
+
+    public string urlTema { get; set; }
+    public string Value { get; set; }
+    string isRekapitulasiAktif = "btn-secondary";
+    string isSettingAktif = "";
+    bool hideRekapitulasi = false;
+    bool hideKonfigurasi = true;
+    IGrid Grid { get; set; }
+    public bool IsLoading { get; set; }
+    private int fontSize = 12;
+    private List<WeatherForecast> _dsRekapitulasi { get; set; } = new();
+    private List<Konfigurasi> _konfigurasi { get; set; } = new();
+    private List<ModelDokumen> _cetak { get; set; } = new();
+
+    public List<ModelTema> ListTema { get; set; } = new();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        urlTema = Preferences.Get("urlTema", "css/bootstrap/bootstrap.min.css");
+        foreach (var Themeitems in modVariabel.GroupedThemes)
+        {
+            string parent = Themeitems.Key.ToString();
+            foreach (var item in Themeitems.Value)
+            {
+                ListTema.Add(new ModelTema{ Tema = item, Warna =$"{item}-backgoud"});
+
+            }
+        }
+
+        _dsRekapitulasi.AddRange(await svc.GetForecastAsync(DateTime.Now));
+        _konfigurasi.Add(new Konfigurasi
+            {
+                Nama = "Skin Name",
+                Value = 0,
+            });
+        _konfigurasi.Add(new Konfigurasi
+            {
+                Nama = "Increase Font Size",
+                Value = 1,
+            });
+        var doc = canCetak.Split('|').ToList();
+        foreach (var item in doc)
+        {
+            ListDokumen.Add(new ModelDokumen { Dokumen = item });
+        }
+
+        //Untuk mendapatkan ukuran layar
+        var dimensiLayar = await JSRuntime.InvokeAsync<ModelDimensiLayar>("getDimensiLayar");
+        if (dimensiLayar.Lebar <= 992 || dimensiLayar.Lebar <= 768)
+        {
+            SizeTabel = "100%";
+        }
+        //foreach (string printname in PrinterSettings.InstalledPrinters)
+        //{
+        //    ListPrinter.Add(new ModelPrinter{ NamaPrinter = printname});
+        //}
+    }
+    public async Task ProsesPilihTema(ModelTema? tema = null)
+    {
+        _modelTema = tema;
+        if (tema != null)
+        {
+            if (modVariabel._activeTheme.Name != tema.Tema && tema != null)
+            {
+                var itemTema = ThemeItem.Create(tema.Tema);
+                if (itemTema.StylesheetLinkUrl[1] is not null)
+                {
+                    urlTema = itemTema.StylesheetLinkUrl[1];
+                    Preferences.Set("urlTema", itemTema.StylesheetLinkUrl[1]);
+                }
+                foreach (string stylesheetLinkUrl in itemTema.StylesheetLinkUrl)
+                    await JSRuntime.InvokeVoidAsync("fetch", stylesheetLinkUrl, new
+                    {
+                        method = "GET",
+                        mode = "no-cors"
+                    });
+                await Task.WhenAll(
+                );
+            }
+        }
+
+
+        StateHasChanged();
+    }
+
+    void TampilRekapitulasi()
+    {
+        isSettingAktif = "";
+        isRekapitulasiAktif = "btn-secondary";
+        hideRekapitulasi = false;
+        hideKonfigurasi = true;
+
+    }
+
+    void TampilKonfigurasi()
+    {
+        isSettingAktif = "btn-secondary";
+        isRekapitulasiAktif = "";
+        hideRekapitulasi = true;
+        hideKonfigurasi = false;
+    }
+
+    void UbahFontSize(int size)
+    {
+
+    }
+    void OnCollapse(RadzenSplitterEventArgs args)
+    {
+    }
+    void OnExpand(RadzenSplitterEventArgs args)
+    {
+    }
+    async Task TampilkanColumnChooser()
+    {
+        this.Grid.ShowColumnChooser(".column-chooser-button");
+    }
+    public class Konfigurasi
+    {
+        public string Nama { get; set; }
+        public int Value { get; set; }
+    }
+
+    public class ModelDokumen
+    {
+        public string Dokumen { get; set; }
+    }
+
+    public class ModelPrinter
+    {
+        public string NamaPrinter { get; set; }
+    }
+
+    public class ModelTema
+    {
+        public string Tema { get; set; }
+        public string Warna { get; set; }
+    }
+    public class ModelDimensiLayar
+    {
+        public int Lebar { get; set; }
+        public int Tinggi { get; set; }
+    }
+
+    string canCetak { get; set; } = "Rekapitulasi|Invoice|Barcode";
+
+    List<ModelDokumen> ListDokumen { get; set; } = new();
+
+    List<ModelPrinter> ListPrinter { get; set; } = new();
+
+}

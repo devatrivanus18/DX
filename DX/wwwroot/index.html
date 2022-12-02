@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>DX</title>
+    <base href="/" />
+   
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="DX.styles.css" rel="stylesheet" />
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="_content/DevExpress.Blazor.Themes/bootstrap-external.bs5.min.css" rel="stylesheet" />
+</head>
+
+<body>
+
+    <div class="status-bar-safe-area"></div>
+
+    <div id="app">Loading...</div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    <script src="js/html2canvas.js"></script>
+    <script>
+        window.getDimensiLayar = function () {
+            return {
+                lebar: window.innerWidth,
+                tinggi: window.innerHeight
+            };
+        };
+
+        function put2Canvas(canvasDestination) {
+            html2canvas(document.querySelector("#IdIsiKonten")).then(canvas => {
+
+                var canvasID = document.getElementById(canvasDestination);
+                //get the destination context
+                var ctx = canvasID.getContext('2d');
+                ctx.scale(1, 1);
+                ctx.width = window.innerWidth;
+                ctx.height = window.innerHeight;
+                ctx.drawImage(canvas, 0, 0);
+            });
+        }
+
+        function getData() {
+            return new Promise((resolve, reject) => {
+                html2canvas(document.querySelector("#IdIsiKonten")).then(canvas => {
+                    resolve(canvas.toDataURL())
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>
